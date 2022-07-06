@@ -1,39 +1,78 @@
 """
-исходим из того, что интервалы отсортированы, правильно
+Было бы просто, если мы исходим из того, что интервалы отсортированы, правильно
 указаны началои конец и не пересекаются сами с собой
 
-но ученик, во втором тесте сумел раздвоится и у него есть пересекающиеся интервалы,
+Но ученик, во втором тесте сумел раздвоится и у него есть пересекающиеся интервалы,
 поэтому необходима функция, которая возвращает интервалы без пересечений
+для этого написана функция intersect_interval, которая объединяет пересекающиеся интервалы
+ученика. Если с учителем будет такая же проблема, то такую функцию стоит применить и к интервалам
+учителя, прежде чем их сравнивать с интервалом урока
 """
 
+
 def intersect_interval(intervals):
-    """функция возвращает интервалы без пересчений"""
-    intervals_not_inttersect = []
+    """функция получает интервалы в виде списка и возвращает
+    список непересекающихся интервалов из первоначального списка"""
+    result_list = [-1, -1]
 
+    """цикл по всем интервалам"""
     for i in range(0, len(intervals), 2):
-        current_start = intervals[i]
-        current_end = intervals[i+1]
+        left_barier = 0
+        right_barier = 0
 
-        count = 0
-        # for start, end in intervals_not_inttersect:
-        while count < len(intervals_not_inttersect):
-            start = intervals_not_inttersect[count][0]
-            end = intervals_not_inttersect[count][1]
+        left_valeu = intervals[i]
+        right_value = intervals[i+1]
 
-            # если текущий интервал входит полностью в сравниваемый,
-            # то этот интервал не вносится, цикл прерывается
-            if current_start >= start and current_end <= end:
+        """первая проверка - если первое значение интервала меньше первого 
+        значение в результирующем списке, то оно сразу добавляется в список 
+        вначале дважы, для сохранения парности интервалов"""
+        if left_valeu < result_list[0]:
+            result_list.insert(0, left_valeu)
+            result_list.insert(0, left_valeu)
+        else:
+            """цикл по результирующему списку интервалов.
+            за раз берется один интервал (два числа)
+            чикл с конца
+            проверка для левого значени интервала"""
+            for i in range(len(result_list)-1, -1, -2):
+                """если проверяемое значение больше последнего
+                значения, то
+                он добавляется в результирующий лист дважды, для сохранения
+                парности интервалов"""
+                if left_valeu > result_list[i]:
+                    result_list.insert(i+1, left_valeu)
+                    result_list.insert(i+1, left_valeu)
+                    left_barier = i+1
+                    break
+                elif left_valeu <= result_list[i] and left_valeu >= result_list[i-1]:
+                    left_barier = i-1
+                    break
+
+        """цикл по результирующему списку интервалов.
+        за раз берется один интервал (два числа)
+        цикл с конца проверка для правого значени интервала"""
+        for i in range(len(result_list) - 1, -1, -2):
+
+            """если проверяемое значение больше последнего
+            значения, то он добавляется в результирующий лист"""
+            if right_value > result_list[i]:
+                result_list.insert(i + 1, right_value)
+                right_barier = i + 1
                 break
-            # если текущий интервал находится слева от сравниваемого,
-            # то он добавляется перед сравниваемым и цикл прерывается
-            if current_end <= start:
-                intervals_not_inttersect.insert(count, (current_start, current_end))
+            elif right_value <= result_list[i] and right_value >= result_list[i - 1]:
+                right_barier = i
                 break
 
-            count += 1
+        """удаление лишних интервалов в границах барьеров"""
+        del result_list[left_barier+1 : right_barier]
+
+    return result_list[2:]
 
 
 def appearance(intervals):
+    """функция получает словарь с интервалами урока,
+    интервалами учителя и ученика
+    вовзращает общее время нахождения учителя и ученика на уроке"""
     lesson_start = intervals['lesson'][0]
     lesson_end = intervals['lesson'][1]
 
@@ -55,13 +94,14 @@ def appearance(intervals):
 
         intervals_tutor.append((tutor_start, tutor_end))
 
+    """получение интервалов ученика без пересечений"""
     intervals_pupil = intersect_interval(intervals['pupil'])
 
     intervals_common = []
     """цикл интервалов ученика"""
-    for i in range(0, len(intervals['pupil']), 2):
-        pupil_start = intervals['pupil'][i]
-        pupil_end = intervals['pupil'][i+1]
+    for i in range(0, len(intervals_pupil), 2):
+        pupil_start = intervals_pupil[i]
+        pupil_end = intervals_pupil[i+1]
 
         """сравниваем текущий интервал ученика 
         с каждым интервалом учителя"""
@@ -80,7 +120,6 @@ def appearance(intervals):
 
             intervals_common.append((pupil_start_temp, pupil_end_temp))
 
-    print(intervals_common)
     """подсчет времени общих интервалов"""
     total_time = 0
     for common_start, common_end in intervals_common:
@@ -107,9 +146,9 @@ tests = [
 ]
 
 if __name__ == '__main__':
-   # for i, test in enumerate(tests):
-   #     test_answer = appearance(test['data'])
-   #     assert test_answer == test['answer'], f'Error on test case {i}, got {test_answer}, expected {test["answer"]}'
+    for i, test in enumerate(tests):
+        test_answer = appearance(test['data'])
+        assert test_answer == test['answer'], f'Error on test case {i}, got {test_answer}, expected {test["answer"]}'
 
     for i, test in enumerate(tests):
         test_answer = appearance(test['data'])
